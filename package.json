@@ -1,0 +1,23 @@
+{
+  "name": "BrickFinder",
+  "version": "0.1.0",
+  "scripts": {
+    "typings": "node node_modules/typings install bluebird sinon --save&node node_modules/typings install dt~jsdom dt~sinon-chrome dt~selenium-webdriver --global --save",
+    "ut": "node node_modules/mocha/bin/_mocha test/UT",
+    "mt": "node node_modules/mocha/bin/_mocha test/MT",
+    "e2e": "node node_modules/mocha/bin/_mocha test/e2e",
+    "test": "node node_modules/mocha/bin/_mocha --recursive ./test"
+  },
+  "devDependencies": {
+    "sinon-chrome": "^1.1.2",
+    "sinon": "1.11.1",
+    "mocha": "2.4.5",
+    "jsdom": "9.1.0",
+    "bluebird": "3.3.5",
+    "typings": "^1.0.4",
+    "selenium-webdriver": "2.53.2",
+    "chromedriver": "2.21.2",
+    "crx": "3.0.3",
+    "node-rsa": "0.3.2"
+  }
+}

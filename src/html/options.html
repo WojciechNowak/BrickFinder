@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head><title>Options</title></head>
+<body>
+<link rel="stylesheet" type="text/css" href="../css/styles.css">
+<script src="../externals/jquery-2.1.4.min.js"></script>
+<label>
+  <input type="checkbox" id="doubleClick">
+  After double click on a set number open information about it in a new window.
+</label>
+</div>
+<div class="clear"></div>
+<div id="pages">
+	<div class="selectDescription">Selected sites:</div>
+	<div class="selectSeparator">&nbsp</div>
+	<div class="selectDescription">Available sites:</div>
+	<div class="clear"></div>
+
+	<div class="left"><select id="selectedPages" multiple="multiple"></select></div>
+
+
+	<div id="buttonsContainer">
+    	<input id="RemovePageFromSelected" type="button" value=" >> " />
+    	<input id="AddPageToSelected" type="button" value=" << " />
+	</div>
+
+    <div class="left"><select id="notSelectedPages" multiple="multiple"></select></div>
+</div>
+<div class="clear"></div>
+<div id="status"></div>
+<button id="save">Save</button>
+<script src="../js/common.js"></script>
+<script src="../js/options.js"></script>
+</body>
+</html>

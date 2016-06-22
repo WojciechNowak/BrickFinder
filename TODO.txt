@@ -1,0 +1,6 @@
+TODO:
+
+1) Options page: gray out buttons(if no pages available).
+2) Options page: allow to choose page sequence.
+3) Quick set preview.
+4) Is jquery needed?
