@@ -16,43 +16,43 @@ describe("brickfinder basic e2e", function() {
     var chromeOptions;
     var By = webdriver.By;
 
-    function verifyOpenedUrl(windowHandle, expectedUrl) {
+    function verifyOpenedUrl(windowHandle, expected) {
         return new promise(function(resolve) {
             driver.switchTo().window(windowHandle)
                 .then(function() {
-                    return driver.getCurrentUrl();
+                    return promise.all([driver.getCurrentUrl(), driver.getTitle()]);
                 })
-                .then(function(url) {
-                    assert(url.indexOf(expectedUrl) > -1, "Expected url: " + expectedUrl + " !== actual url: " + url);
+                .then(function(data) {
+                    assert(expected.some(el => data[0].indexOf(el.url) > -1), "Url not expected: " + data[0]);
+                    assert(expected.some(el => data[1].indexOf(el.title)> -1), "Title not expected: " + data[1]);
                     resolve();
                 });
         });
     }
 
     function openExtensionsOptionPage() {
-        return driver.get("chrome://extensions/")
-            .then(function () {
-                driver.switchTo().frame("extensions")
-            })
-            .then(function () {
-                return driver.findElement(By.className("options-link"));
-            })
-            .then(function (element) {
-                return driver.actions()
-                    .mouseMove(element, { x: 0, y: 0 })
-                    .click()
-                    .perform();
-            })
-            .then(function () {
-                var condition = new webdriver.until.Condition("for options page to load", function () {
-                    return driver.getAllWindowHandles().then(windowHandles => windowHandles.length === 2 ? windowHandles : null);
-                });
-
-                return driver.wait(condition, 5000);
-            })
-            .then(function (windowHandles) {
-                return driver.switchTo().window(windowHandles[1]);
-            });
+        return driver.get("chrome://extensions")
+        .then(() => {
+            return driver.findElement(By.tagName("extensions-manager"));
+        })
+        .then(element => {
+            return driver.executeScript("return arguments[0].shadowRoot", element);
+        })
+        .then(element => {
+            return element.findElement(By.tagName("extensions-item-list"));
+        })
+        .then(element => {
+            return driver.executeScript("return arguments[0].shadowRoot", element);
+        })
+        .then(element => {
+            return element.findElement(By.tagName("extensions-item"));
+        })
+        .then(element => {
+            return element.getAttribute("id");
+        })
+        .then(id => {
+            return driver.get("chrome-extension://" + id + "/html/options.html");
+        });
     }
 
     function findAndDblClickElement(elementId) {
@@ -65,19 +65,15 @@ describe("brickfinder basic e2e", function() {
             });
     }
 
-    function selectAllPages(selectId) {
+    function selectPages(selectId, pageNames) {
         return driver.findElement(By.id(selectId))
-            .then(function (selectedPages) {
-                return selectedPages.findElements(By.tagName("option"));
+        .then(function (pages) {
+            var xpath = "//li[" + pageNames.map(site => "contains(text(),'" + site + "')").join(" or ") + "]";
+            return pages.findElements(By.xpath(xpath));
             })
-            .then(function (options) {
-                var promiseArr = options.reduce(function (memo, option) {
-                    memo.push(option.click());
-                    return memo;
-                }, []);
-
-                return Promise.all(promiseArr);
-            });
+        .then(function(selectedPages) {
+            return promise.all(selectedPages.map(page => page.click()));
+        });
     }
 
     before(function() {
@@ -102,10 +98,19 @@ describe("brickfinder basic e2e", function() {
     });
 
     it("should open pages after doubleClick", function () {
-        var EXPECTED_URLS = [
-            "basicTestPage.html",
-            "http://brickset.com/sets/42009",
-            "http://www.bricklink.com/v2/catalog/catalogitem.page?S=42009#T=S&O={}"
+        var EXPECTED_VALUES = [
+            {
+                "url": "basicTestPage.html",
+                "title": ""
+            },
+            {
+                "url": "https://brickset.com/sets/42009",
+                "title": "42009"
+            },
+            {
+                "url": "https://www.bricklink.com/v2/catalog/catalogitem.page?S=42009#T=S&O={%22iconly%22:0}",
+                "title": "42009"
+            }
         ];
 
         return driver.get(path.join(__dirname, "basicTestPage.html"))
@@ -114,18 +119,13 @@ describe("brickfinder basic e2e", function() {
             })
             .then(function () {
                 var condition = new webdriver.until.Condition("for open windows failed", function () {
-                    return driver.getAllWindowHandles().then(windowHandles => windowHandles.length === EXPECTED_URLS.length ? windowHandles : null);
+                    return driver.getAllWindowHandles().then(windowHandles => windowHandles.length === EXPECTED_VALUES.length ? windowHandles : null);
                 });
 
                 return driver.wait(condition, 10000);
             })
             .then(function (windows) {
-                return promise.all(
-                    windows.reduce(function(memo, windowHandle, index) {
-                        memo.push(verifyOpenedUrl(windowHandle, EXPECTED_URLS[index]));
-                        return memo;
-                    }, [])
-                );
+                return promise.all( windows.map(windowHandle => verifyOpenedUrl(windowHandle, EXPECTED_VALUES )));
             })
             .catch(function(err) {
                 driver.quit();
@@ -164,25 +164,43 @@ describe("brickfinder basic e2e", function() {
     });
 
     it("should allow changing search pages", function () {
-        var EXPECTED_URLS = [
-            "chrome://chrome/extensions/",
-            "basicTestPage.html",
-            "http://www.ebay.co.uk/sch/i.html?_from=R40&_trksid=p2050601.m570.l1313.TR0.TRC0.H0.Xlego+668.TRS0&_nkw=lego+668&_sacat=0",
-            "http://allegro.pl/listing/listing.php?order=d&string=lego+668",
-            "https://www.amazon.de/s/ref=nb_sb_noss_2?url=search-alias%3Daps&field-keywords=lego+668",
-            "https://www.amazon.co.uk/s/ref=nb_sb_noss_2?url=search-alias%3Daps&field-keywords=lego+668",
-            "http://www.ebay.de/sch/i.html?_from=R40&_trksid=p2050601.m570.l1313.TR0.TRC0.H0.Xlego+668.TRS0&_nkw=lego+668&_sacat=0"
+        var EXPECTED_VALUES = [
+            {
+                "url": "basicTestPage.html",
+                "title": ""
+            },
+            {
+                "url": "https://www.ebay.co.uk",
+                "title": "lego 668"
+            },
+            {
+                "url": "https://allegro.pl",
+                "title": "Lego 668"
+            },
+            {
+                "url": "https://www.amazon.de",
+                "title": "lego 668"
+            },
+            {
+                "url": "https://www.ebay.de",
+                "title": "lego 668"
+            }
         ];
+        var PAGES_TO_SELECT = ["ebay.co.uk", "ebay.de", "amazon.de", "allegro.pl"];
 
         return openExtensionsOptionPage()
             .then(function() {
-                return selectAllPages("selectedPages");
+                return selectPages("selectedPages", ["brickset.com", "bricklink.com"]);
             })
             .then(function() {
                 return driver.findElement(By.id("RemovePageFromSelected")).click();
             })
+            .then(function() {
+                // unselect pages
+                return selectPages("notSelectedPages", ["brickset.com", "bricklink.com"]);
+            })
             .then(function () {
-                return selectAllPages("notSelectedPages");
+                return selectPages("notSelectedPages", PAGES_TO_SELECT);
             })
             .then(function (options) {
                 return driver.findElement(By.id("AddPageToSelected")).click();
@@ -198,18 +216,13 @@ describe("brickfinder basic e2e", function() {
             })
             .then(function () {
                 var condition = new webdriver.until.Condition("for open windows failed", function () {
-                    return driver.getAllWindowHandles().then(windowHandles => windowHandles.length === EXPECTED_URLS.length ? windowHandles : null);
+                    return driver.getAllWindowHandles().then(windowHandles => windowHandles.length === EXPECTED_VALUES.length ? windowHandles : null);
                 });
 
-                return driver.wait(condition, 5000);
+                return driver.wait(condition, 15000);
             })
             .then(function (windows) {
-                return promise.all(
-                    windows.reduce(function(memo, windowHandle, index) {
-                        memo.push(verifyOpenedUrl(windowHandle, EXPECTED_URLS[index]));
-                        return memo;
-                    }, [])
-                );
+                return promise.all( windows.map(windowHandle => verifyOpenedUrl(windowHandle, EXPECTED_VALUES )));
             })
             .catch(function(err) {
                 driver.quit();

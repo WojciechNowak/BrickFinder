@@ -77,7 +77,6 @@ describe("content", function () {
         window.document.dispatchEvent(new window.MouseEvent("dblclick"));
         setNumber = " ";
         window.document.dispatchEvent(new window.MouseEvent("dblclick"));
-
         sinon.assert.calledOnce(chrome.storage.sync.get);
         sinon.assert.calledWith(chrome.storage.sync.get, {useDoubleClick: true});
         sinon.assert.notCalled(chrome.runtime.sendMessage);

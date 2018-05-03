@@ -2,6 +2,7 @@
 
 var sinon = require("sinon");
 var chrome = require("sinon-chrome");
+var chai = require("chai");
 
 var createTestPage = require("./../testUtils.js").createTestPage;
 
@@ -23,7 +24,7 @@ describe("common", function () {
     });
 
     it("ALL_ID should equal to all", function() {
-        sinon.deepEqual(window.ALL_ID, "all");
+        chai.expect(window.ALL_ID).to.equal("all");
     });
 
     it("addContextMenu should call chrome.contextMenus.create", function () {

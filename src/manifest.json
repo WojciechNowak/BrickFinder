@@ -3,12 +3,12 @@
   "name": "BrickFinder",
   "description": "Find information about LEGO(r) set.",
   "author": "Wojciech Nowak",
-  "version": "1.10",
+  "version": "1.20",
 
   "background": {
       "persistent": false,
       "css": ["css/styles.css"],
-      "scripts": ["js/common.js", "js/eventListener.js"]
+      "scripts": ["js/common.js", "js/pageCreator.js", "js/eventListener.js"]
     },
   "content_scripts": [
     {

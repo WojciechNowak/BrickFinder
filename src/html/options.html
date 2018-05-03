@@ -1,35 +1,157 @@
 <!DOCTYPE html>
 <html>
-<head><title>Options</title></head>
+
+<head>
+    <title>Options</title>
+</head>
+
 <body>
-<link rel="stylesheet" type="text/css" href="../css/styles.css">
-<script src="../externals/jquery-2.1.4.min.js"></script>
-<label>
-  <input type="checkbox" id="doubleClick">
-  After double click on a set number open information about it in a new window.
-</label>
-</div>
-<div class="clear"></div>
-<div id="pages">
-	<div class="selectDescription">Selected sites:</div>
-	<div class="selectSeparator">&nbsp</div>
-	<div class="selectDescription">Available sites:</div>
-	<div class="clear"></div>
+    <link rel="stylesheet" type="text/css" href="../css/styles.css">
+    <link rel="stylesheet" href="../externals/bootstrap.min.css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="../externals/jquery-2.1.4.min.js"></script>
+    <script src="../externals/bootstrap.min.js"></script>
+    <script src="../externals/bootstrap.bundle.min.js"></script>
+    <div class="container">
+        <div class="row pt-3">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <div class="input-group-text">
+                        <input type="checkbox" id="doubleClick">
+                    </div>
+                </div>
+                <input type="text" class="form-control" placeholder="After double click on a set number open information about it in a new window."
+                    disabled>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-5 pt-3" style="overflow-y: auto">
+                <div class="card bg-info" style="overflow-y: scroll; height: 300px">
+                    <div class="card-body text-center">
+                        <div class="card-header text-black" style="cursor: context-menu">Selected pages:</div>
+                        <div class="card-text text-white">
+                            <ul id="selectedPages" class="list-group list-group-flush">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-	<div class="left"><select id="selectedPages" multiple="multiple"></select></div>
+            <div class="list-arrows col-md-1 text-center">
+                <div class="row">
+                    <div class="col-12">
+                        <button id="AddPageToSelected" class="btn btn-outline-primary btn-sm">
+                            <i class="fa fa-angle-double-left"></i>
+                        </button>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button id="RemovePageFromSelected" class="btn btn-outline-primary btn-sm">
+                            <i class="fa fa-angle-double-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
+            <div class="col-md-5 pt-3" style="overflow-y: auto">
+                <div class="card bg-info" style="overflow-y: scroll; height: 300px">
+                    <div class="card-body text-center">
+                        <div class="card-header text-black" style="cursor: context-menu">Available pages:</div>
+                        <div class="card-text text-white">
+                            <ul id="notSelectedPages" class="list-group list-group-flush">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row input-block pt-3">
+            <h6 class="col-4">Add your page:</h6>
+            <div id="errorAdd" class="col-8 text-danger"></div>
+        </div>
+        <div class="row input-group">
+            <input type="text" id="customPageUrl" class="form-control" placeholder="Url address e.g. https://rebrickable.com/sets/_SETNUMBER_-1/"
+                aria-label="Url address" aria-describedby="basic-addon2">
+            <div class="input-group-append">
+                <button id="verifyPage" class="btn btn-outline-secondary" type="button" data-toggle="modal" data-target="#verifySetNumberModal">Verify</button>
+                <button class="btn btn-outline-secondary" type="button" data-toggle="modal" data-target="#helpUrlModal">
+                    <i class="fa fa-question-circle fa-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="row input-group">
+            <input type="text" id="addCustomPageName" class="form-control" placeholder="Page display name e.g. Rebrickable" aria-label="Page display name"
+                aria-describedby="basic-addon2">
+            <div class="input-group-append">
+                <button id="addCustomPage" class="btn btn-outline-secondary" type="button">Add</button>
+            </div>
+        </div>
+        <div class="row text-center pt-3">
+            <div class="col-3"></div>
+            <div id="status" class="col-6"></div>
+            <div class="col-3"></div>
+        </div>
+        <div class="row pt-3">
+            <div class="col-3"></div>
+            <div class="col-6">
+                <button id="save" class="btn btn-outline-success btn-block">Save</button>
+            </div>
+            <div class="col-3"></div>
+        </div>
+    </div>
 
-	<div id="buttonsContainer">
-    	<input id="RemovePageFromSelected" type="button" value=" >> " />
-    	<input id="AddPageToSelected" type="button" value=" << " />
-	</div>
+    <!-- Modal help instructions -->
+    <div class="modal fade" id="helpUrlModal" tabindex="-1" role="dialog" aria-labelledby="helpUrlModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpUrlModalLabel">Url instruction</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <ol>
+                        <li>Go to a page you want to add e.g.<br>
+                            <a class="pl-3" href="https://rebrickable.com">https://rebrickable.com</a>
+                        </li>
+                        <li>Open a subpage with information about a set e.g. 8880:<br>
+                            <a class="pl-3" href="https://rebrickable.com/sets/8880-1">https://rebrickable.com/sets/8880-1</a>
+                        </li>
+                        <li>Change url address:<br>
+                            <i class="fa fa-pencil" aria-hidden="true"></i> Replace a set number (<b>8880</b>) with <b>_SETNUMBER_</b><br>
+                        </li>
+                        <li>Result url should look like this:<br>
+                            <i><label class='text-success pl-3'>https://rebrickable.com/sets/<b>_SETNUMBER_</b>-1</label></i>
+                        </li>
+                    </ol>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div class="left"><select id="notSelectedPages" multiple="multiple"></select></div>
-</div>
-<div class="clear"></div>
-<div id="status"></div>
-<button id="save">Save</button>
-<script src="../js/common.js"></script>
-<script src="../js/options.js"></script>
+    <!-- Modal verify url-->
+    <div class="modal fade" id="verifySetNumberModal" tabindex="-1" role="dialog" aria-labelledby="verifySetNumberModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="verifySetNumberModalLabel">Enter set number</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <input type="text" id="verifySetNumberText" class="form-control" placeholder="Set number" aria-label="Set number" aria-describedby="basic-addon2">
+                <div class="modal-footer">
+                    <button id="verifySetNumberButton" class="btn btn-outline-secondary" type="button" data-dismiss="modal" aria-label="Go">Verify</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../js/common.js"></script>
+    <script src="../js/options.js"></script>
 </body>
+
 </html>

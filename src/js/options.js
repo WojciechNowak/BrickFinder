@@ -1,75 +1,107 @@
 function getMultiselectOptions(id) {
-  var selectedPages = document.getElementById(id);
+  var selectedPages = $("#" + id + " li");
   var pages = {};
-  for (var i=0; i<selectedPages.length; i++) {
-    var key = selectedPages.options[i].text;
-    pages[key] = selectedPages.options[i].value;
-  }
+  selectedPages.each(function (index) {
+    var key = $(this).text();
+    pages[key] = $(this).attr("value");
+  });
 
   return pages;
 }
 
 function createMultiselectOption(selectedPages, notSelectedPages) {
   var selectedOptions = fillMultiselectOption("selectedPages", selectedPages);
-  $("#selectedPages").replaceWith(selectedOptions);
-
   var notSelectedOptions = fillMultiselectOption("notSelectedPages", notSelectedPages);
-  $("#notSelectedPages").replaceWith(notSelectedOptions);
 }
 
 function fillMultiselectOption(id, pages) {
-  var select = $("<select></select>", {
-    id: id,
-    multiple: "multiple"
-  });
-
   for (var key in pages) {
     if (pages.hasOwnProperty(key)) {
-      var option = '<option value="' + pages[key] + '">' + key + '</option>';
-      select.append(option);
+      $("#" + id).append('<li class="list-group-item bg-info" style="cursor: pointer;" value="' + pages[key] + '">' + key + '</li>');
     }
   }
-
-  return select;
 }
 
 function moveMultiselectOptions(event) {
-  var id = $(event.target).attr("id");
+  var id = $(this).attr("id");
   var selectFrom = id === "AddPageToSelected" ? "#notSelectedPages" : "#selectedPages";
   var moveTo = id === "AddPageToSelected" ? "#selectedPages" : "#notSelectedPages";
- 
-  var selectedItems = $(selectFrom + " :selected").toArray();
-  $(moveTo).append(selectedItems);
-  selectedItems.remove;
+
+  actives = $(selectFrom + ' li.bg-success');
+  actives.clone().appendTo($(moveTo));
+  actives.remove();
 }
 
 function save_options() {
+  clearErrorMsg();
   var useDoubleClick = document.getElementById("doubleClick").checked;
   var selectedPages = getMultiselectOptions("selectedPages");
   var notSelectedPages = getMultiselectOptions("notSelectedPages");
-  
+
   chrome.storage.sync.set({
     useDoubleClick: useDoubleClick,
     selectedPages: selectedPages,
     notSelectedPages: notSelectedPages
-  }, function() {
+  }, function () {
     createContextMenu();
     var status = document.getElementById("status");
     status.textContent = "Options saved.";
-    setTimeout(function() {
+    setTimeout(function () {
       status.textContent = "";
     }, 750);
   });
 }
 
 function restore_options() {
-  chrome.storage.sync.get(["useDoubleClick", "selectedPages", "notSelectedPages"], function(items) {
+  $('body').on('click', '.list-group-item', function () {
+    $(this).toggleClass('bg-info');
+    $(this).toggleClass('bg-success');
+  });
+
+  chrome.storage.sync.get(["useDoubleClick", "selectedPages", "notSelectedPages"], function (items) {
     document.getElementById("doubleClick").checked = items.useDoubleClick;
     createMultiselectOption(items.selectedPages, items.notSelectedPages);
   });
 }
 
+function verify_custom_page() {
+  var url = $("#customPageUrl").val();
+  var setNumber = $("#verifySetNumberText").val();
+  url = url.replace("_SETNUMBER_", setNumber);
+  window.open(url, "_blank");
+}
+
+function add_custom_page() {
+  var name = $("#addCustomPageName").val();
+  var url = $("#customPageUrl").val();
+  var errorText = "";
+
+  if (!url) {
+    errorText += "Url is incorrect! "
+  }
+  if (!name) {
+    errorText += "Page name cannot be empty! "
+  }
+
+  if (errorText) {
+    $("#errorAdd").text(errorText);
+  } else {
+    clearErrorMsg();
+    var page = {};
+    page[name] = url;
+    fillMultiselectOption("selectedPages", page);
+  }
+}
+
+function clearErrorMsg() {
+  if ($("#errorAdd").val()) {
+    $("#errorAdd").text("");
+  }
+}
+
 document.getElementById("AddPageToSelected").addEventListener("click", moveMultiselectOptions)
 document.getElementById("RemovePageFromSelected").addEventListener("click", moveMultiselectOptions)
+document.getElementById("verifySetNumberButton").addEventListener("click", verify_custom_page);
+document.getElementById("addCustomPage").addEventListener("click", add_custom_page);
 document.getElementById("save").addEventListener("click", save_options);
 document.addEventListener("DOMContentLoaded", restore_options);

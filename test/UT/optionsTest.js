@@ -11,12 +11,11 @@ describe("options", function () {
     var window;
     var createContextMenuSpy;
     
-    function createOption(text, value, selected) {
-        var option = window.document.createElement("option");
-        option.text = text;
-        option.value = value;
-        option.selected = selected;
-        return option;
+    function createLi(text, value, selected) {
+        return window.$('<li/>')
+            .text(text)
+            .attr('value', value)
+            .addClass(selected ? 'bg-success' : 'bg-info');
     }
     
     beforeEach(function(done) {
@@ -53,22 +52,22 @@ describe("options", function () {
 
         assert.equal(window.document.getElementById("doubleClick").checked, true);
         
-        var selectedPages = window.document.getElementById("selectedPages");
-        assert.strictEqual(selectedPages.options.length, Object.keys(items.selectedPages).length);
-        assert.strictEqual(selectedPages.options.item(0).text, "bricklink");
-        assert.strictEqual(selectedPages.options.item(0).value, "url1");
-        assert.strictEqual(selectedPages.options.item(1).text, "brickset");
-        assert.strictEqual(selectedPages.options.item(1).value, "url2");
+        var selectedPages = window.$("#selectedPages li");
+        assert.strictEqual(selectedPages.length, Object.keys(items.selectedPages).length);
+        assert.strictEqual(selectedPages[0].innerHTML, "bricklink");
+        assert.strictEqual(selectedPages[0].getAttribute("value"), "url1");
+        assert.strictEqual(selectedPages[1].innerHTML, "brickset");
+        assert.strictEqual(selectedPages[1].getAttribute("value"), "url2");
         
-        var notSelectedPages = window.document.getElementById("notSelectedPages");
-        assert.strictEqual(notSelectedPages.options.length, Object.keys(items.notSelectedPages).length);
+        var notSelectedPages = window.$("#notSelectedPages li");
+        assert.strictEqual(notSelectedPages.length, Object.keys(items.notSelectedPages).length);
     });
     
     it("should save options", function() {
         //fill objects with some values
         window.document.getElementById("doubleClick").checked = true;
-        window.document.getElementById("notSelectedPages").add(createOption("bricklink", "url1", true));
-        window.document.getElementById("notSelectedPages").add(createOption("brickset", "url2", false));
+        window.$("#notSelectedPages").append( createLi( "bricklink", "url1", true ));
+        window.$("#notSelectedPages").append( createLi( "brickset", "url2", false ));
         
         chrome.storage.sync.set.yields();
         var clock = sinon.useFakeTimers();
@@ -86,63 +85,112 @@ describe("options", function () {
     
     it("should remove pages from selected to non selected ones", function() {
         //fill objects with some values
-        var selectedPages = window.document.getElementById("selectedPages");
-        selectedPages.add(createOption("bricklink", "url1", false));
-        selectedPages.add(createOption("brickset", "url2", true));
-        selectedPages.add(createOption("ebay", "url3", true));
+        var selectedPages = window.$("#selectedPages");
+        selectedPages.append( createLi("bricklink", "url1", false) );
+        selectedPages.append( createLi("brickset", "url2", true) );
+        selectedPages.append( createLi("ebay", "url3", true) );
         
         //trigger removing brickset and ebay
         window.document.getElementById("RemovePageFromSelected").dispatchEvent(new window.MouseEvent("click"));
         
-        var notSelectedPages = window.document.getElementById("notSelectedPages");
-        assert.strictEqual(selectedPages.options.length, 1);
-        assert.strictEqual(notSelectedPages.options.length, 2);
+        var selectedPagesList = window.$("#selectedPages li");
+        var notSelectedPagesList = window.$("#notSelectedPages li");
+        assert.strictEqual(selectedPagesList.length, 1);
+        assert.strictEqual(notSelectedPagesList.length, 2);
         
         //trigger removing bricklink
-        selectedPages.options.item(0).selected = true;
+        window.$(selectedPagesList[0]).addClass('bg-success');
         window.document.getElementById("RemovePageFromSelected").dispatchEvent(new window.MouseEvent("click"));
         
         //just to check if nothing breaks when no option is selected
         window.document.getElementById("RemovePageFromSelected").dispatchEvent(new window.MouseEvent("click"));
         
-        assert.strictEqual(selectedPages.options.length, 0);
-        assert.strictEqual(notSelectedPages.options.length, 3);
-        assert.strictEqual(notSelectedPages.options.item(0).text, "brickset");
-        assert.strictEqual(notSelectedPages.options.item(0).value, "url2");
-        assert.strictEqual(notSelectedPages.options.item(1).text, "ebay");
-        assert.strictEqual(notSelectedPages.options.item(1).value, "url3");
-        assert.strictEqual(notSelectedPages.options.item(2).text, "bricklink");
-        assert.strictEqual(notSelectedPages.options.item(2).value, "url1");
+        selectedPagesList = window.$("#selectedPages li");
+        notSelectedPagesList = window.$("#notSelectedPages li");
+        assert.strictEqual(selectedPagesList.length, 0);
+        assert.strictEqual(notSelectedPagesList.length, 3);
+        assert.strictEqual(notSelectedPagesList[0].innerHTML, "brickset");
+        assert.strictEqual(notSelectedPagesList[0].getAttribute("value"), "url2");
+        assert.strictEqual(notSelectedPagesList[1].innerHTML, "ebay");
+        assert.strictEqual(notSelectedPagesList[1].getAttribute("value"), "url3");
+        assert.strictEqual(notSelectedPagesList[2].innerHTML, "bricklink");
+        assert.strictEqual(notSelectedPagesList[2].getAttribute("value"), "url1");
     });
     
     it("should add pages from non selected to selected ones", function() {
         //fill objects with some values
-        var notSelectedPages = window.document.getElementById("notSelectedPages");
-        notSelectedPages.add(createOption("bricklink", "url1", true));
-        notSelectedPages.add(createOption("brickset", "url2", false));
-        notSelectedPages.add(createOption("ebay", "url3", true));
+        var notSelectedPages = window.$("#notSelectedPages");
+        notSelectedPages.append( createLi("bricklink", "url1", true) );
+        notSelectedPages.append( createLi("brickset", "url2", false) );
+        notSelectedPages.append( createLi("ebay", "url3", true) );
         
         //trigger removing brickset and ebay
         window.document.getElementById("AddPageToSelected").dispatchEvent(new window.MouseEvent("click"));
         
-        var selectedPages = window.document.getElementById("selectedPages");
-        assert.strictEqual(notSelectedPages.options.length, 1);
-        assert.strictEqual(selectedPages.options.length, 2);
+        var selectedPagesList = window.$("#selectedPages li");
+        var notSelectedPagesList = window.$("#notSelectedPages li");
+        assert.strictEqual(notSelectedPagesList.length, 1);
+        assert.strictEqual(selectedPagesList.length, 2);
         
         //trigger removing bricklink
-        notSelectedPages.options.item(0).selected = true;
+        window.$(notSelectedPagesList[0]).addClass('bg-success');
         window.document.getElementById("AddPageToSelected").dispatchEvent(new window.MouseEvent("click"));
         
         //just to check if nothing breaks when no option is selected
         window.document.getElementById("AddPageToSelected").dispatchEvent(new window.MouseEvent("click"));
         
-        assert.strictEqual(notSelectedPages.options.length, 0);
-        assert.strictEqual(selectedPages.options.length, 3);
-        assert.strictEqual(selectedPages.options.item(0).text, "bricklink");
-        assert.strictEqual(selectedPages.options.item(0).value, "url1");
-        assert.strictEqual(selectedPages.options.item(1).text, "ebay");
-        assert.strictEqual(selectedPages.options.item(1).value, "url3");
-        assert.strictEqual(selectedPages.options.item(2).text, "brickset");
-        assert.strictEqual(selectedPages.options.item(2).value, "url2");
+        selectedPagesList = window.$("#selectedPages li");
+        notSelectedPagesList = window.$("#notSelectedPages li");
+        assert.strictEqual(notSelectedPagesList.length, 0);
+        assert.strictEqual(selectedPagesList.length, 3);
+        assert.strictEqual(selectedPagesList[0].innerHTML, "bricklink");
+        assert.strictEqual(selectedPagesList[0].getAttribute("value"), "url1");
+        assert.strictEqual(selectedPagesList[1].innerHTML, "ebay");
+        assert.strictEqual(selectedPagesList[1].getAttribute("value"), "url3");
+        assert.strictEqual(selectedPagesList[2].innerHTML, "brickset");
+        assert.strictEqual(selectedPagesList[2].getAttribute("value"), "url2");
+    });
+
+    it("should show error message when adding page", () => {
+        //trigger adding page
+        window.$("#addCustomPage").click();
+        assert.strictEqual(window.document.getElementById("errorAdd").textContent, "Url is incorrect! Page name cannot be empty! ");
+
+        window.$("#customPageUrl").val("textContent");
+        window.$("#addCustomPage").click();
+        assert.strictEqual(window.document.getElementById("errorAdd").textContent, "Page name cannot be empty! ");
+
+        window.$("#customPageUrl").val("");
+        window.$("#addCustomPageName").val("textContent");
+        window.$("#addCustomPage").click();
+        assert.strictEqual(window.document.getElementById("errorAdd").textContent, "Url is incorrect! ");
+    });
+
+    it("should add page", () => {
+        window.$("#customPageUrl").val("urlContent");
+        window.$("#addCustomPageName").val("pageName");
+        window.$("#addCustomPage").click();
+        
+        var selectedPagesList = window.$("#selectedPages li");
+        assert.strictEqual(window.document.getElementById("errorAdd").textContent, "");
+        assert.strictEqual(selectedPagesList.length, 1);
+        assert.strictEqual(selectedPagesList[0].innerHTML, "pageName");
+        assert.strictEqual(selectedPagesList[0].getAttribute("value"), "urlContent");
+    });
+
+    it("should verify page", () => {
+        var openPageStub = sinon.stub();
+        window.open = openPageStub;
+
+        window.$("#customPageUrl").val("urlContent/_SETNUMBER_");
+        window.$("#addCustomPageName").val("pageName");
+        window.$("#verifySetNumberText").val("8880");
+
+        //trigger veryfing page
+        window.$("#verify").click();
+        window.$("#verifySetNumberButton").click();
+        
+        sinon.assert.calledWithExactly(openPageStub, "urlContent/8880", "_blank");
     });
 });
+

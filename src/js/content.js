@@ -8,7 +8,7 @@ function addDblClickReaction() {
     if (document.activeElement.tagName.toUpperCase() !== "INPUT") {
       var text = getSelectedText();
 
-      if (!isNaN(text) && text.length) {
+      if (text && !isNaN(text)) {
         chrome.runtime.sendMessage(text);
       }
     }
